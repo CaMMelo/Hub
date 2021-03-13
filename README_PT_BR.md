@@ -30,101 +30,101 @@
 
 ---
 
-[ English | [简体中文](./README_CN.md) | [Português(BR)](./README_PT_BR.md)]
+[ [English](./README.md) | [简体中文](./README_CN.md) | Português(BR)]
 
-### What is Hub for?
+### Pra que serve o Hub?
 
-Software 2.0 needs Data 2.0, and Hub delivers it. Most of the time Data Scientists/ML researchers work on data management and preprocessing instead of training models. With Hub, we are fixing this. We store your (even petabyte-scale) datasets as single numpy-like array on the cloud, so you can seamlessly access and work with it from any machine. Hub makes any data type (images, text files, audio, or video) stored in cloud usable as fast as if it were stored on premise. With same dataset view, your team can always be in sync. 
+Software 2.0 precisa de Dados 2.0, e o Hub fornece isso. Na maior parte do tempo os Cientistas de Dados/Pesquisadores de Aprendizagem de Maquina trabalham no preprocessamento e gestão de dados ao invés do treinamento de modelos. Com o Hub, iremos dar um fim a isso. Armazenamos os seus datasets em nuvem (até mesmo em escalas de petabytes) como se fossem arrays numpy, dessa forma você pode acessar e trabalhar com eles de qualquer lugar. O Hub faz com que qualquer tipo de dado (imagem, texto, audio ou video) armazenados em nuvem possa ser utilizado como se estivessem armazenado localmente. Com a mesma visão dos dados, seu time sempre estará em sincronia.
 
-Hub is being used by Waymo, Red Cross, World Resources Institute, Omdena, and others.
+O Hub está sendo usado pela Waymo, Red Cross, World Resources Institute, Omdena, e outros.
 
 ### Features 
 
-* Store and retrieve large datasets with version-control
-* Collaborate as in Google Docs: Multiple data scientists working on the same data in sync with no interruptions
-* Access from multiple machines simultaneously
-* Deploy anywhere - locally, on Google Cloud, S3, Azure as well as Activeloop (by default - and for free!) 
-* Integrate with your ML tools like Numpy, Dask, Ray, [PyTorch](https://docs.activeloop.ai/en/latest/integrations/pytorch.html), or [TensorFlow](https://docs.activeloop.ai/en/latest/integrations/tensorflow.html)
-* Create arrays as big as you want. You can store images as big as 100k by 100k!
-* Keep shape of each sample dynamic. This way you can store small and big arrays as 1 array. 
-* [Visualize](http://app.activeloop.ai/?utm_source=github&utm_medium=repo&utm_campaign=readme) any slice of the data in a matter of seconds without redundant manipulations
+* Armazena e recupera grandes datasets com versionamento
+* Colaborativo igual ao Google Docs: Vários cientistas de dados trabalham nos mesmos dados em sincronia e sem interrupções
+* Acesso de vários locais simultaneamente
+* Deploy em qualquer lugar - localmente, no Google Cloud, S3, Azure e também no Activeloop (por padrão - e de graça)
+* Integração com suas ferramentas de aprendizagem de máquina favoritas como Numpy, Dask, Ray, [PyTorch](https://docs.activeloop.ai/en/latest/integrations/pytorch.html), ou [TensorFlow](https://docs.activeloop.ai/en/latest/integrations/tensorflow.html)
+* Crie arrays tão grandes o quanto quiser. Você pode salvar imagens de até 100k por 100k!
+* Mantenho o formato de cada amostra dinâmico. Dessa forma você pode armazenar arrays grandes e pequenos em um único array.
+* [Visualize](http://app.activeloop.ai/?utm_source=github&utm_medium=repo&utm_campaign=readme) qualquer parte dos dados em uma questão de segundos sem manipulações redundantes
 
 ## Getting Started
 
-### Access public data. FAST
+### Acesso a dados publicos. RAPIDO
 
-To load a public dataset, one needs to write dozens of lines of code and spend hours accessing and understanding the API as well as downloading the data. With Hub, you only need 2 lines of code, and you **can get started working on your dataset in under 3 minutes**.
+Para acessar um dataset public, seriam necessárias dezenas de linhas de código e muitas horas para ler e entender a API além do download dos dados. Com o Hub, você só precisa de duas linhas, e **pode começar a trabalhar no dataset em menos de 3 minutos**.
 
 ```sh
 pip3 install hub
 ```
 
-Access public datasets in Hub by following a straight-forward convention which merely requires a few lines of simple code. Run this excerpt to get the first thousand images in the [MNIST database](https://app.activeloop.ai/dataset/activeloop/mnist/?utm_source=github&utm_medium=repo&utm_campaign=readme) in the numpy array format:
+Acessar datasets publicos no Hub seguindo uma maneira direta que precisa somente de poucas linhas de código bem simples. Execute esse trecho para carregar as primeiras mil imagens do [dataset MNIST](https://app.activeloop.ai/dataset/activeloop/mnist/?utm_source=github&utm_medium=repo&utm_campaign=readme) no formato de um array numpy:
 ```python
 from hub import Dataset
 
-mnist = Dataset("activeloop/mnist")  # loading the MNIST data lazily
-# saving time with *compute* to retrieve just the necessary data
+mnist = Dataset("activeloop/mnist")  # carregamento "preguiçoso" dos dados MNIST
+# economia de tempo com *compute* carregando somente os dados necessários
 mnist["image"][0:1000].compute()
 ```
-You can find all the other popular datasets on [app.activeloop.ai](https://app.activeloop.ai/datasets/popular/?utm_source=github&utm_medium=repo&utm_campaign=readme).
 
-### Train a model
+Voce pode encontrar outros datasets populares em [app.activeloop.ai](https://app.activeloop.ai/datasets/popular/?utm_source=github&utm_medium=repo&utm_campaign=readme).
 
-Load the data and train your model **directly**. Hub is integrated with PyTorch and TensorFlow and performs conversions between formats in an understandable fashion. Take a look at the example with PyTorch below:
+### Treine um modelo
+
+Carregue os dados e treine seu model **diretamente**. O Hub é integrado com o PyTorch e o TensorFlow e faz a conversão entre os formatos de uma maneira simples. Veja um exemplo utilizando PyTorch:
 
 ```python
 from hub import Dataset
 import torch
 
 mnist = Dataset("activeloop/mnist")
-# converting MNIST to PyTorch format
+# conversão do MNIST para o formato do PyTorch
 mnist = mnist.to_pytorch(lambda x: (x["image"], x["label"]))
 
 train_loader = torch.utils.data.DataLoader(mnist, batch_size=1, num_workers=0)
 
 for image, label in train_loader:
-    # Training loop here
+    # Rotina de treinamento
 ```
 
-### Create a local dataset 
-If you want to work on your own data locally, you can start by creating a dataset:
+### Crie um dataset local 
+Se preferir trabalhar com seus proprios dados localmente, voce pode criar seus próprio dataset:
 ```python
 from hub import Dataset, schema
 import numpy as np
 
 ds = Dataset(
-    "./data/dataset_name",  # file path to the dataset
-    shape = (4,),  # follows numpy shape convention
-    mode = "w+",  # reading & writing mode
-    schema = {  # named blobs of data that may specify types
-    # Tensor is a generic structure that can contain any type of data
+    "./data/dataset_name",  # caminho do arquivo do dataset
+    shape = (4,),  # seguindo a convensão de formato do numpy
+    mode = "w+",  # modo de leitura e escrita
+    schema = {  # campos nomeados de dados que podem especificar tipos
+    # Tensor é uma estrutura genérica que contém qualquer tipo de dado
         "image": schema.Tensor((512, 512), dtype="float"),
         "label": schema.Tensor((512, 512), dtype="float"),
     }
 )
 
-# filling the data containers with data (here - zeroes to initialize)
+# preenche os campos de dados com valores (inicialização com zeros)
 ds["image"][:] = np.zeros((4, 512, 512))
 ds["label"][:] = np.zeros((4, 512, 512))
-ds.commit()  # executing the creation of the dataset
+ds.commit()  # executa a criação do dataset
 ```
 
-You can also specify `s3://bucket/path`, `gcs://bucket/path` or azure path. [Here](https://docs.activeloop.ai/en/latest/simple.html#data-storage) you can find more information on cloud storage.
-Also, if you need a publicly available dataset that you cannot find in the Hub, you may [file a request](https://github.com/activeloopai/Hub/issues/new?assignees=&labels=i%3A+enhancement%2C+i%3A+needs+triage&template=feature_request.md&title=[FEATURE]+New+Dataset+Required%3A+%2Adataset_name%2A). We will enable it for everyone as soon as we can!
+Também é possível especificar `s3://bucket/path`, `gcs://bucket/path` ou caminhos da azure. [Esse link](https://docs.activeloop.ai/en/latest/simple.html#data-storage) contém mais informações sobre armazenamento em nuvem. Se precisar de um dataset publico que não encontrar no Hub, você pode [enviar um pedido](https://github.com/activeloopai/Hub/issues/new?assignees=&labels=i%3A+enhancement%2C+i%3A+needs+triage&template=feature_request.md&title=[FEATURE]+New+Dataset+Required%3A+%2Adataset_name%2A). Disponibilizaremos o quanto antes!
 
-### Upload your dataset and access it from <ins>anywhere</ins> in 3 simple steps
+### Envie seu dataset e acesse ele de <ins>qualquer lugar</ins> em 3 etapas:
 
-1. Register a free account at [Activeloop](https://app.activeloop.ai/register/?utm_source=github&utm_medium=repo&utm_campaign=readme) and authenticate locally:
+1. Crie uma conta em [Activeloop](https://app.activeloop.ai/register/?utm_source=github&utm_medium=repo&utm_campaign=readme) e faça o login localmente:
 ```sh
 hub register
 hub login
 
-# alternatively, add username and password as arguments (use on platforms like Kaggle)
+# Se preferir, adicione seu nome de usuario e senha com os argumentos (para plataformas como Kaggle)
 hub login -u username -p password
 ```
 
-2. Then create a dataset, specifying its name and upload it to your account. For instance:
+2. Crie seu dataset, especificando o nome e envie para sua conta. Por exemplo:
 ```python
 from hub import Dataset, schema
 import numpy as np
@@ -144,7 +144,7 @@ ds["label"][:] = np.zeros((4, 512, 512))
 ds.commit()
 ```
 
-3. Access it from anywhere else in the world, on any device having a command line:
+3. Acesse de qualquer lugar do mundo, em qualquer aparelho com o seguinte comando:
 ```python
 from hub import Dataset
 
@@ -152,7 +152,7 @@ ds = Dataset("username/dataset_name")
 ```
 
 
-## Documentation
+## Documentação
 
 For more advanced data pipelines like uploading large datasets or applying many transformations, please refer to our [documentation](http://docs.activeloop.ai/?utm_source=github&utm_medium=repo&utm_campaign=readme).
 
