@@ -98,9 +98,18 @@ class TensorView:
 
         if isinstance(self.dtype, hub.schema.class_label.ClassLabel) and label_name:
             if isinstance(self.indexes, int):
-                value = self.dtype.int2str(value)
+                if value.ndim == 0:
+                    value = self.dtype.int2str(value)
+                elif value.ndim == 1:
+                    value = [self.dtype.int2str(value[i]) for i in range(value.size)]
             else:
-                value = [self.dtype.int2str(value[i]) for i in range(value.size)]
+                if value.ndim == 1:
+                    value = [self.dtype.int2str(value[i]) for i in range(value.size)]
+                elif value.ndim == 2:
+                    value = [
+                        [self.dtype.int2str(item[i]) for i in range(item.size)]
+                        for item in value
+                    ]
 
         if isinstance(self.dtype, hub.schema.text.Text):
             if self.dataset.tokenizer is not None:
@@ -193,6 +202,7 @@ class TensorView:
         >>> images_tensorview = ds["image"]
         >>> images_tensorview[7, 0:1920, 0:1080, 0:3] = np.zeros((1920, 1080, 3), "uint8") # sets 7th image
         """
+        self.dataset._auto_checkout()
         assign_value = get_value(value)
         # handling strings and bytes
         assign_value = str_to_int(assign_value, self.dataset.tokenizer)
@@ -285,8 +295,12 @@ class TensorView:
 
     def slice_fill(self, slice_):
         "Fills the slice with zeroes for the dimensions that have single elements and squeeze_dims true"
-        new_slice_ = [slice_[0]]
-        offset = 1
+        if isinstance(self.indexes, int):
+            new_slice_ = [0]
+            offset = 0
+        else:
+            new_slice_ = [slice_[0]]
+            offset = 1
         for i in range(1, len(self.nums)):
             if self.squeeze_dims[i]:
                 new_slice_.append(0)
